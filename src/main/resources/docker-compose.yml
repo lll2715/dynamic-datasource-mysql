@@ -1,0 +1,46 @@
+
+version: '3'
+services:
+  mysql-master:
+    image: mysql:5.7
+    container_name: mysql-master
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 #设置root帐号密码
+    ports:
+      - 3301:3306
+    volumes:
+      - /tmp/docker/mysql/master/data:/var/lib/mysql
+      - /tmp/docker/mysql/master/conf/my.cnf:/etc/mysql/my.cnf
+
+  mysql-slave:
+    image: mysql:5.7
+    container_name: mysql-slave
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 #设置root帐号密码
+    ports:
+      - 3302:3306
+    volumes:
+      - /tmp/docker/mysql/slave/data:/var/lib/mysql
+      - /tmp/docker/mysql/slave/conf/my.cnf:/etc/mysql/my.cnf
+
+  web:
+    image: "docker.io/gitlab/gitlab-ce"
+    container_name: gitlab
+    restart: always
+    hostname: 'gitlab.example.com'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.example.com:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+        unicorn['work_processes'] = 2
+        postgresql['shared_buffers'] = "128MB"
+        postgresql['max_worker_processes'] = 2
+    ports:
+      - '8929:8929'
+      - '2224:22'
+    volumes:
+      - '/usr/local/docker/gitlab/config:/etc/gitlab'
+      - '/usr/local/docker/gitlab/logs:/var/log/gitlab'
+      - '/usr/local/docker/gitlab/data:/var/opt/gitlab'
